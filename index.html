@@ -2,187 +2,133 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <title>延長料金カレンダー</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>料金計算カレンダー</title>
   <style>
-    body { font-family: sans-serif; margin: 10px; }
+    body { font-family: sans-serif; margin: 10px; font-size: 16px; }
     table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-    th, td { border: 1px solid #ccc; text-align: center; padding: 5px; }
-    th { background: #f0f0f0; }
-    .saturday { background: #e0f7fa; }
-    .sunday { background: #ffebee; }
+    th, td {
+      border: 1px solid #ccc;
+      text-align: center;
+      padding: 4px;
+      word-wrap: break-word;
+    }
+    th { background-color: #f0f0f0; font-size: 14px; }
+    .saturday { background-color: #e0f7fa; }
+    .sunday { background-color: #ffebee; }
+    input[type="number"] {
+      width: 100%;
+      max-width: 60px;
+      font-size: 16px;
+      text-align: right;
+      box-sizing: border-box;
+    }
     .controls { margin-bottom: 10px; }
-    .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
-    .input-row label { flex: 1; display: flex; flex-direction: column; font-size: 14px; }
-    .input-row input { font-size: 18px; padding: 5px; }
-    #shareSection { display: none; margin-top: 15px; }
-    #shareCode { width: 100%; font-size: 16px; }
-    button { padding: 10px; font-size: 16px; margin-top: 10px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    label { white-space: nowrap; font-size: 14px; }
+    select, input[type="number"], input[type="month"] { font-size: 16px; }
+    #result { margin-top: 12px; font-weight: bold; font-size: 18px; }
   </style>
 </head>
 <body>
-  <h2>料金計算カレンダー</h2>
+  <h2>延長料金カレンダー</h2>
 
   <div class="controls">
-    <label>年月: 
+    <label>年月:
       <input type="month" id="monthInput">
     </label>
-  </div>
-
-  <div class="input-row">
-    <label>1時間あたり料金
-      <input type="number" id="hourlyRate" inputmode="numeric">
-    </label>
-    <label>1日上限金額
-      <input type="number" id="dailyCap" inputmode="numeric">
-    </label>
-    <label>1か月上限金額
-      <input type="number" id="monthlyCap" inputmode="numeric">
-    </label>
+    <div class="row">
+      <label>1時間あたり料金:
+        <input type="number" id="hourlyRate" value="1000" inputmode="numeric">
+      </label>
+      <label>1日上限:
+        <input type="number" id="dailyCap" value="5000" inputmode="numeric">
+      </label>
+      <label>1か月上限:
+        <input type="number" id="monthlyCap" value="0" inputmode="numeric">
+      </label>
+    </div>
   </div>
 
   <div id="calendar"></div>
-
-  <h3>合計金額: <span id="total">0</span> 円</h3>
-
-  <button onclick="toggleShare()">共有コードを表示/非表示</button>
-
-  <div id="shareSection">
-    <input type="text" id="shareCode" readonly>
-    <button onclick="generateCode()">コード生成</button>
-  </div>
+  <div id="result"></div>
 
   <script>
-    const calendarDiv = document.getElementById("calendar");
-    const totalSpan = document.getElementById("total");
     const monthInput = document.getElementById("monthInput");
     const hourlyRateInput = document.getElementById("hourlyRate");
     const dailyCapInput = document.getElementById("dailyCap");
     const monthlyCapInput = document.getElementById("monthlyCap");
-    const shareSection = document.getElementById("shareSection");
-    const shareCodeInput = document.getElementById("shareCode");
+    const calendarDiv = document.getElementById("calendar");
+    const resultDiv = document.getElementById("result");
 
-    function buildCalendar(year, month) {
-      calendarDiv.innerHTML = "";
-      const firstDay = new Date(year, month - 1, 1);
+    // デフォルト年月を今日に設定
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    monthInput.value = `${yyyy}-${mm}`;
+
+    // カレンダー生成
+    function generateCalendar(year, month) {
+      let date = new Date(year, month - 1, 1);
       const lastDay = new Date(year, month, 0).getDate();
 
-      let table = document.createElement("table");
-      let headerRow = document.createElement("tr");
-      ["日","月","火","水","木","金","土"].forEach(d => {
-        let th = document.createElement("th");
-        th.textContent = d;
-        headerRow.appendChild(th);
-      });
-      table.appendChild(headerRow);
+      let table = "<table><tr>";
+      for (let d = 0; d < 7; d++) {
+        table += "<th>" + ["日","月","火","水","木","金","土"][d] + "</th>";
+      }
+      table += "</tr><tr>";
 
-      let row = document.createElement("tr");
-      for (let i = 0; i < firstDay.getDay(); i++) {
-        row.appendChild(document.createElement("td"));
+      for (let i = 0; i < date.getDay(); i++) {
+        table += "<td></td>";
       }
 
-      for (let date = 1; date <= lastDay; date++) {
-        if (row.children.length === 7) {
-          table.appendChild(row);
-          row = document.createElement("tr");
-        }
-
-        let cell = document.createElement("td");
-        let dow = new Date(year, month - 1, date).getDay();
-        if (dow === 0) cell.classList.add("sunday");
-        if (dow === 6) cell.classList.add("saturday");
-
-        let input = document.createElement("input");
-        input.type = "number";
-        input.min = "0";
-        input.inputMode = "numeric";
-        input.placeholder = " ";
-        input.dataset.date = date;
-        input.style.width = "100%";
-        input.addEventListener("input", calculateTotal);
-
-        cell.appendChild(document.createTextNode(date));
-        cell.appendChild(document.createElement("br"));
-        cell.appendChild(input);
-
-        row.appendChild(cell);
+      for (let d = 1; d <= lastDay; d++) {
+        const dayOfWeek = new Date(year, month - 1, d).getDay();
+        let cls = "";
+        if (dayOfWeek === 0) cls = "sunday";
+        if (dayOfWeek === 6) cls = "saturday";
+        table += `<td class="${cls}">${d}<br>
+          <input type="number" inputmode="decimal" step="0.25" min="0" onchange="calculateTotal()">h</td>`;
+        if (dayOfWeek === 6) table += "</tr><tr>";
       }
-      while (row.children.length < 7) {
-        row.appendChild(document.createElement("td"));
-      }
-      table.appendChild(row);
 
-      calendarDiv.appendChild(table);
+      table += "</tr></table>";
+      calendarDiv.innerHTML = table;
     }
 
+    // 合計金額計算
     function calculateTotal() {
-      let rate = parseFloat(hourlyRateInput.value) || 0;
-      let dailyCap = parseFloat(dailyCapInput.value) || Infinity;
-      let monthlyCap = parseFloat(monthlyCapInput.value) || Infinity;
-      let inputs = calendarDiv.querySelectorAll("input[type=number]");
-      let total = 0;
+      const hourlyRate = parseInt(hourlyRateInput.value) || 0;
+      const dailyCap = parseInt(dailyCapInput.value) || 0;
+      const monthlyCap = parseInt(monthlyCapInput.value) || 0;
 
-      inputs.forEach(input => {
+      let total = 0;
+      document.querySelectorAll("#calendar input[type='number']").forEach(input => {
         let hours = parseFloat(input.value) || 0;
-        let cost = hours * rate;
-        if (cost > dailyCap) cost = dailyCap;
+        let cost = hours * hourlyRate;
+        if (dailyCap > 0 && cost > dailyCap) cost = dailyCap;
         total += cost;
       });
 
-      if (total > monthlyCap) total = monthlyCap;
-      totalSpan.textContent = total;
+      if (monthlyCap > 0 && total > monthlyCap) total = monthlyCap;
+
+      resultDiv.innerText = "合計: " + total.toLocaleString() + " 円";
     }
 
-    function toggleShare() {
-      shareSection.style.display = shareSection.style.display === "none" ? "block" : "none";
-    }
+    // 初期表示
+    const [initYear, initMonth] = monthInput.value.split("-");
+    generateCalendar(initYear, initMonth);
+    calculateTotal();
 
-    function generateCode() {
-      let data = {
-        month: monthInput.value,
-        rate: hourlyRateInput.value,
-        dailyCap: dailyCapInput.value,
-        monthlyCap: monthlyCapInput.value,
-        entries: {}
-      };
-      calendarDiv.querySelectorAll("input[type=number]").forEach(input => {
-        if (input.value) data.entries[input.dataset.date] = input.value;
-      });
-      shareCodeInput.value = btoa(JSON.stringify(data));
-    }
-
-    function loadFromCode(code) {
-      try {
-        let data = JSON.parse(atob(code));
-        monthInput.value = data.month;
-        hourlyRateInput.value = data.rate;
-        dailyCapInput.value = data.dailyCap;
-        monthlyCapInput.value = data.monthlyCap;
-        let [y,m] = data.month.split("-");
-        buildCalendar(parseInt(y), parseInt(m));
-        for (let d in data.entries) {
-          let input = calendarDiv.querySelector(`input[data-date='${d}']`);
-          if (input) input.value = data.entries[d];
-        }
-        calculateTotal();
-      } catch (e) {
-        alert("コードが不正です");
-      }
-    }
-
-    // デフォルトで今月を設定
-    window.onload = () => {
-      let now = new Date();
-      let ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-      monthInput.value = ym;
-      buildCalendar(now.getFullYear(), now.getMonth()+1);
-    };
-
+    // 月変更・設定変更イベント
     monthInput.addEventListener("change", () => {
-      let [y,m] = monthInput.value.split("-");
-      buildCalendar(parseInt(y), parseInt(m));
+      const [year, month] = monthInput.value.split("-");
+      generateCalendar(year, month);
       calculateTotal();
     });
+    hourlyRateInput.addEventListener("input", calculateTotal);
+    dailyCapInput.addEventListener("input", calculateTotal);
+    monthlyCapInput.addEventListener("input", calculateTotal);
   </script>
 </body>
 </html>
