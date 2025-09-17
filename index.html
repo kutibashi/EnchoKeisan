@@ -4,22 +4,46 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>料金計算カレンダー</title>
-  <style>
-    body { font-family: sans-serif; margin: 10px; }
-    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-    th, td { border: 1px solid #ccc; text-align: center; padding: 5px; }
-    th { background: #f0f0f0; }
-    .saturday { background: #e0f7fa; }
-    .sunday { background: #ffebee; }
-    .controls { margin-bottom: 10px; }
-    .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
-    .input-row label { flex: 1; display: flex; flex-direction: column; font-size: 14px; }
-    .input-row input { font-size: 18px; padding: 5px; }
-    #shareSection { display: none; margin-top: 15px; }
-    #shareCode { width: 100%; font-size: 16px; }
-    button { padding: 10px; font-size: 16px; margin-top: 10px; }
-    .result-box { margin-top: 15px; padding: 10px; border: 1px solid #ccc; background: #fafafa; }
-  </style>
+<style>
+  body { font-family: sans-serif; margin: 10px; }
+  table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+  th, td { border: 1px solid #ccc; text-align: center; padding: 5px; }
+  th { background: #f0f0f0; }
+  .saturday { background: #e0f7fa; }
+  .sunday { background: #ffebee; }
+  .controls { margin-bottom: 10px; }
+  .input-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .input-row label { flex: 1; display: flex; flex-direction: column; font-size: 14px; }
+  .input-row input { font-size: 18px; padding: 5px; }
+  .result-box {
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background: #fafafa;
+    font-size: 16px;
+  }
+  /* 共有コード欄も result-box と同じ見た目に */
+  #shareSection {
+    display: none;
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background: #fafafa;
+  }
+  #shareCode {
+    width: 100%;
+    font-size: 16px;
+    margin-bottom: 8px;
+    padding: 5px;
+    box-sizing: border-box;
+  }
+  button {
+    padding: 10px;
+    font-size: 16px;
+    width: 100%; /* iPhoneで崩れないように幅いっぱい */
+    box-sizing: border-box;
+  }
+</style>
 </head>
 <body>
   <h2>料金計算カレンダー</h2>
