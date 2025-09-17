@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>延長料金カレンダー</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin: 10px; }
+    table { border-collapse: collapse; margin: auto; }
+    td, th { border: 1px solid #ccc; width: 40px; height: 40px; text-align: center; }
+    input[type="number"] { width: 35px; }
+    #result { margin-top: 10px; font-size: 1.2em; font-weight: bold; }
+    #code { width: 90%; }
+  </style>
+</head>
+<body>
+  <h2>延長料金カレンダー</h2>
+
+  <div>
+    再現コード: <input id="code" placeholder="ここにコードを入力">
+    <button onclick="loadCode()">読込</button>
+  </div>
+
+  <table id="calendar"></table>
+
+  <div id="result">合計: 0 円</div>
+
+  <button onclick="generateCode()">コード生成</button>
+
+  <script>
+    const rate = 1000; // 1時間あたりの料金（円）
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth(); // 0=1月
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const calendar = document.getElementById("calendar");
+
+    // カレンダー生成
+    function renderCalendar(data={}) {
+      calendar.innerHTML = "";
+      let row = document.createElement("tr");
+      for (let d = 1; d <= daysInMonth; d++) {
+        const cell = document.createElement("td");
+        const input = document.createElement("input");
+        input.type = "number";
+        input.min = 0;
+        input.step = 0.5;
+        input.value = data[d] || "";
+        input.oninput = updateTotal;
+        cell.appendChild(input);
+        row.appendChild(cell);
+        if (d % 7 === 0 || d === daysInMonth) {
+          calendar.appendChild(row);
+          row = document.createElement("tr");
+        }
+      }
+      updateTotal();
+    }
+
+    // 合計計算
+    function updateTotal() {
+      let total = 0;
+      const inputs = calendar.querySelectorAll("input");
+      inputs.forEach(i => {
+        const val = parseFloat(i.value);
+        if (!isNaN(val)) total += val * rate;
+      });
+      document.getElementById("result").textContent = "合計: " + total + " 円";
+    }
+
+    // コード生成（JSON → Base64）
+    function generateCode() {
+      const inputs = calendar.querySelectorAll("input");
+      let data = {};
+      inputs.forEach((i, idx) => {
+        const val = parseFloat(i.value);
+        if (!isNaN(val) && val > 0) data[idx + 1] = val;
+      });
+      const obj = {year, month: month+1, rate, data};
+      const code = btoa(JSON.stringify(obj));
+      document.getElementById("code").value = code;
+      alert("コードをコピーしました");
+    }
+
+    // コード読込（Base64 → JSON）
+    function loadCode() {
+      const code = document.getElementById("code").value.trim();
+      if (!code) return;
+      try {
+        const obj = JSON.parse(atob(code));
+        if (obj.year === year && obj.month === month+1) {
+          renderCalendar(obj.data);
+        } else {
+          alert("この月のデータではありません");
+        }
+      } catch(e) {
+        alert("コードが無効です");
+      }
+    }
+
+    renderCalendar();
+  </script>
+</body>
+</html>
