@@ -5,22 +5,29 @@
   <title>延長料金カレンダー</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: sans-serif; margin: 20px; font-size: 18px; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ccc; text-align: center; padding: 5px; }
-    th { background-color: #f0f0f0; }
+    body { font-family: sans-serif; margin: 10px; font-size: 16px; }
+    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    th, td {
+      border: 1px solid #ccc;
+      text-align: center;
+      padding: 4px;
+      word-wrap: break-word;
+    }
+    th { background-color: #f0f0f0; font-size: 14px; }
     .saturday { background-color: #e0f7fa; }
     .sunday { background-color: #ffebee; }
     input[type="number"] {
-      width: 80px;
-      font-size: 18px;
+      width: 100%;
+      max-width: 60px;
+      font-size: 16px;
       text-align: right;
+      box-sizing: border-box;
     }
-    .controls { margin-bottom: 15px; }
-    .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-    label { white-space: nowrap; }
-    select, input[type="number"] { font-size: 18px; }
-    #result { margin-top: 15px; font-weight: bold; }
+    .controls { margin-bottom: 10px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    label { white-space: nowrap; font-size: 14px; }
+    select, input[type="number"], input[type="month"] { font-size: 16px; }
+    #result { margin-top: 12px; font-weight: bold; font-size: 18px; }
   </style>
 </head>
 <body>
@@ -31,13 +38,6 @@
       <input type="month" id="monthInput">
     </label>
     <div class="row">
-      <label>料金単位:
-        <select id="timeUnit">
-          <option value="60" selected>1時間単位</option>
-          <option value="30">30分単位</option>
-          <option value="15">15分単位</option>
-        </select>
-      </label>
       <label>1時間あたり料金:
         <input type="number" id="hourlyRate" value="1000" inputmode="numeric">
       </label>
@@ -55,7 +55,6 @@
 
   <script>
     const monthInput = document.getElementById("monthInput");
-    const timeUnitSelect = document.getElementById("timeUnit");
     const hourlyRateInput = document.getElementById("hourlyRate");
     const dailyCapInput = document.getElementById("dailyCap");
     const monthlyCapInput = document.getElementById("monthlyCap");
@@ -89,7 +88,7 @@
         if (dayOfWeek === 0) cls = "sunday";
         if (dayOfWeek === 6) cls = "saturday";
         table += `<td class="${cls}">${d}<br>
-          <input type="number" inputmode="numeric" min="0" value="0" onchange="calculateTotal()">単位</td>`;
+          <input type="number" inputmode="numeric" min="0" value="0" onchange="calculateTotal()">h</td>`;
         if (dayOfWeek === 6) table += "</tr><tr>";
       }
 
@@ -102,12 +101,10 @@
       const hourlyRate = parseInt(hourlyRateInput.value) || 0;
       const dailyCap = parseInt(dailyCapInput.value) || 0;
       const monthlyCap = parseInt(monthlyCapInput.value) || 0;
-      const unitMinutes = parseInt(timeUnitSelect.value); // 60, 30, 15
 
       let total = 0;
       document.querySelectorAll("#calendar input[type='number']").forEach(input => {
-        let units = parseInt(input.value) || 0;
-        let hours = (units * unitMinutes) / 60; // 単位 → 時間に換算
+        let hours = parseInt(input.value) || 0;
         let cost = hours * hourlyRate;
         if (dailyCap > 0 && cost > dailyCap) cost = dailyCap;
         total += cost;
@@ -129,7 +126,6 @@
       generateCalendar(year, month);
       calculateTotal();
     });
-    timeUnitSelect.addEventListener("change", calculateTotal);
     hourlyRateInput.addEventListener("input", calculateTotal);
     dailyCapInput.addEventListener("input", calculateTotal);
     monthlyCapInput.addEventListener("input", calculateTotal);
