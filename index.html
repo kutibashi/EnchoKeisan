@@ -54,15 +54,16 @@
     </label>
   </div>
 
+  <!-- 入力欄（oninput を追加） -->
   <div class="input-row">
     <label>1時間あたり料金
-      <input type="number" id="hourlyRate" inputmode="numeric">
+      <input type="number" id="hourlyRate" inputmode="numeric" oninput="calculateTotal()">
     </label>
     <label>1日上限金額
-      <input type="number" id="dailyCap" inputmode="numeric">
+      <input type="number" id="dailyCap" inputmode="numeric" oninput="calculateTotal()">
     </label>
     <label>1か月上限金額
-      <input type="number" id="monthlyCap" inputmode="numeric">
+      <input type="number" id="monthlyCap" inputmode="numeric" oninput="calculateTotal()">
     </label>
   </div>
 
