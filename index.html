@@ -88,7 +88,7 @@
         if (dayOfWeek === 0) cls = "sunday";
         if (dayOfWeek === 6) cls = "saturday";
         table += `<td class="${cls}">${d}<br>
-          <input type="number" inputmode="numeric" min="0" value="0" onchange="calculateTotal()">h</td>`;
+          <input type="number" inputmode="decimal" step="0.25" min="0" onchange="calculateTotal()">h</td>`;
         if (dayOfWeek === 6) table += "</tr><tr>";
       }
 
@@ -104,7 +104,7 @@
 
       let total = 0;
       document.querySelectorAll("#calendar input[type='number']").forEach(input => {
-        let hours = parseInt(input.value) || 0;
+        let hours = parseFloat(input.value) || 0;
         let cost = hours * hourlyRate;
         if (dailyCap > 0 && cost > dailyCap) cost = dailyCap;
         total += cost;
