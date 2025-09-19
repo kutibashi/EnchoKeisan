@@ -10,13 +10,14 @@
       padding: 10px;
       background: #f9f9f9;
       color: #333;
+      font-size: 18px; /* 全体文字サイズを大きめに */
     }
     header {
       text-align: center;
       margin-bottom: 10px;
     }
     h1 {
-      font-size: 1.4rem;
+      font-size: 1.6rem;
       margin: 0;
     }
     #calendar {
@@ -27,98 +28,73 @@
     .day {
       border: 1px solid #ccc;
       background: #fff;
-      min-height: 70px;
-      padding: 2px;
+      min-height: 80px;
+      padding: 4px;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      font-size: 0.9rem;
+      font-size: 1rem;
     }
-    .sunday {
-      background-color: #ffe5e5;
-      color: red;
-    }
-    .saturday {
-      background-color: #e5f0ff;
-      color: blue;
-    }
-    .holiday {
-      background-color: #ffe5e5;
-      color: red;
-    }
+    .sunday { background-color: #ffe5e5; color: red; }
+    .saturday { background-color: #e5f0ff; color: blue; }
+    .holiday { background-color: #ffe5e5; color: red; }
     .day input {
       width: 90%;
-      margin-top: 3px;
-      padding: 4px;
-      font-size: 0.8rem;
+      margin-top: 5px;
+      padding: 6px;
+      font-size: 1rem;
     }
     .cost {
-      margin-top: 3px;
-      font-size: 0.8rem;
+      margin-top: 5px;
+      font-size: 1rem;
       font-weight: bold;
     }
     #summary {
-      margin-top: 15px;
-      font-size: 1rem;
-      line-height: 1.6;
+      margin-top: 20px;
+      font-size: 1.1rem;
+      line-height: 1.8;
     }
     #summary strong {
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       color: #000;
     }
-    #settings {
+    #settings, #share {
       display: none;
       margin-top: 15px;
       background: #fff;
-      padding: 10px;
+      padding: 12px;
       border: 1px solid #ccc;
       border-radius: 8px;
     }
-    #settings label {
+    #settings label, #share label {
       display: block;
-      margin: 6px 0 3px;
-      font-size: 0.9rem;
+      margin: 8px 0 4px;
+      font-size: 1rem;
     }
-    #settings input {
+    #settings input, #share input {
       width: 100%;
-      padding: 5px;
+      padding: 6px;
       font-size: 1rem;
     }
     button {
       display: inline-block;
-      padding: 8px 12px;
-      margin: 5px 0;
-      font-size: 1rem;
+      padding: 10px 14px;
+      margin: 8px 0;
+      font-size: 1.1rem;
       border-radius: 6px;
       border: none;
       background: #007bff;
       color: #fff;
       cursor: pointer;
     }
-    button:active {
-      background: #0056b3;
-    }
-
-    /* 📱スマホ用レスポンシブ調整 */
+    button:active { background: #0056b3; }
     @media (max-width: 600px) {
-      h1 {
-        font-size: 1.2rem;
-      }
-      .day {
-        min-height: 60px;
-        font-size: 0.75rem;
-      }
-      .day input {
-        font-size: 0.7rem;
-        padding: 3px;
-      }
-      button {
-        width: 100%;
-        font-size: 1rem;
-        padding: 10px;
-      }
+      h1 { font-size: 1.3rem; }
+      .day { min-height: 70px; font-size: 0.95rem; }
+      .day input { font-size: 0.9rem; padding: 5px; }
+      button { width: 100%; font-size: 1.1rem; padding: 12px; }
     }
   </style>
 </head>
@@ -126,31 +102,37 @@
   <header>
     <h1>保育園延長料金計算システム</h1>
     <button onclick="toggleSettings()">⚙️ 設定</button>
+    <button onclick="toggleShare()">🔗 共有コード</button>
   </header>
 
   <div id="calendar"></div>
 
   <div id="summary">
-    <p>合計延長料金: <strong><span id="total">0</span> 円</strong></p>
+    <p>合計料金: <strong><span id="grossTotal">0</span> 円</strong></p>
+    <p>補助額: <strong><span id="subsidyTotal">0</span> 円</strong></p>
+    <p>自己負担額: <strong><span id="netTotal">0</span> 円</strong></p>
   </div>
 
   <div id="settings">
     <label>1時間あたり料金（円）</label>
     <input type="number" id="hourlyRate" value="250">
-
     <label>1日上限（円）</label>
     <input type="number" id="dailyCap" value="1250">
-
     <label>1か月上限（円）</label>
     <input type="number" id="monthlyCap" value="10000">
-
     <label>補助の日額上限（円）</label>
     <input type="number" id="dailySubsidyCap" value="450">
-
     <label>補助の月額上限（円）</label>
     <input type="number" id="monthlySubsidyCap" value="11260">
-
     <button onclick="saveSettings()">保存</button>
+  </div>
+
+  <div id="share">
+    <label>共有コード</label>
+    <input type="text" id="shareCodeInput" placeholder="共有コードを入力">
+    <button onclick="applyShareCode()">コードを反映</button>
+    <button onclick="generateShareCode()">コードを生成</button>
+    <p id="generatedCode"></p>
   </div>
 
   <script>
@@ -161,11 +143,8 @@
     const month = today.getMonth();
 
     let holidays = [];
-    let hourlyRate = 250;
-    let dailyCap = 1250;
-    let monthlyCap = 10000;
-    let dailySubsidyCap = 450;
-    let monthlySubsidyCap = 11260;
+    let hourlyRate = 250, dailyCap = 1250, monthlyCap = 10000;
+    let dailySubsidyCap = 450, monthlySubsidyCap = 11260;
 
     async function fetchHolidays() {
       const timeMin = new Date(year, month, 1).toISOString();
@@ -192,7 +171,6 @@
         const cell = document.createElement("div");
         const day = new Date(year, month, date).getDay();
         const dateStr = new Date(year, month, date).toISOString().split("T")[0];
-
         cell.className = "day";
         if (day === 0) cell.classList.add("sunday");
         if (day === 6) cell.classList.add("saturday");
@@ -211,8 +189,7 @@
     }
 
     function calculateTotal() {
-      let total = 0;
-      let subsidyTotal = 0;
+      let grossTotal = 0, subsidyTotal = 0, netTotal = 0;
 
       document.querySelectorAll(".day").forEach(cell => {
         const input = cell.querySelector("input");
@@ -222,28 +199,28 @@
         let cost = hours * hourlyRate;
         if (cost > dailyCap) cost = dailyCap;
 
-        let subsidy = 0;
-        if (cost > 0) {
-          subsidy = Math.min(dailySubsidyCap, cost);
-          subsidyTotal += subsidy;
-        }
-
+        let subsidy = Math.min(dailySubsidyCap, cost);
         let userCost = cost - subsidy;
-        total += userCost;
 
-        // 日ごとの料金表示（「日料金：」を削除し、金額のみ）
+        grossTotal += cost;
+        subsidyTotal += subsidy;
+        netTotal += userCost;
+
         costDiv.textContent = cost > 0 ? `${userCost}円` : "";
       });
 
-      if (total > monthlyCap) total = monthlyCap;
+      if (grossTotal > monthlyCap) grossTotal = monthlyCap;
       if (subsidyTotal > monthlySubsidyCap) subsidyTotal = monthlySubsidyCap;
+      if (netTotal > monthlyCap) netTotal = monthlyCap; // 自己負担が月上限を超えないように
 
-      document.getElementById("total").textContent = total;
+      document.getElementById("grossTotal").textContent = grossTotal;
+      document.getElementById("subsidyTotal").textContent = subsidyTotal;
+      document.getElementById("netTotal").textContent = netTotal;
     }
 
     function toggleSettings() {
-      const settings = document.getElementById("settings");
-      settings.style.display = settings.style.display === "block" ? "none" : "block";
+      const s = document.getElementById("settings");
+      s.style.display = s.style.display === "block" ? "none" : "block";
     }
 
     function saveSettings() {
@@ -253,6 +230,26 @@
       dailySubsidyCap = parseInt(document.getElementById("dailySubsidyCap").value) || 450;
       monthlySubsidyCap = parseInt(document.getElementById("monthlySubsidyCap").value) || 11260;
       alert("設定を保存しました");
+      calculateTotal();
+    }
+
+    function toggleShare() {
+      const s = document.getElementById("share");
+      s.style.display = s.style.display === "block" ? "none" : "block";
+    }
+
+    function generateShareCode() {
+      const inputs = Array.from(document.querySelectorAll(".day input")).map(i => i.value || "0");
+      const code = inputs.join(",");
+      document.getElementById("generatedCode").textContent = "生成コード: " + code;
+    }
+
+    function applyShareCode() {
+      const code = document.getElementById("shareCodeInput").value.trim();
+      if (!code) return;
+      const values = code.split(",");
+      const inputs = document.querySelectorAll(".day input");
+      values.forEach((val, i) => { if (inputs[i]) inputs[i].value = val; });
       calculateTotal();
     }
 
