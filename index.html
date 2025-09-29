@@ -67,10 +67,10 @@
   <button class="toggle-btn" onclick="toggleSettings()">⚙ 設定を表示/非表示</button>
 
   <div id="settings" class="settings">
-    1時間あたり料金: <input type="number" id="rate" value="250"> 円　
-    1日上限: <input type="number" id="dailyMax" value="1250"> 円　
-    1か月上限: <input type="number" id="monthlyMax" value="10000"> 円　
-    補助の日額上限: <input type="number" id="subsidyDailyMax" value="450"> 円　
+    1時間あたり料金: <input type="number" id="rate" value="250"> 円</br>
+    1日上限: <input type="number" id="dailyMax" value="1250"> 円</br>
+    1か月上限: <input type="number" id="monthlyMax" value="10000"> 円</br>
+    補助の日額上限: <input type="number" id="subsidyDailyMax" value="450"> 円</br>
     補助の月額上限: <input type="number" id="subsidyMonthlyMax" value="11260"> 円
   </div>
 
@@ -140,7 +140,7 @@
 
           row += `<td class="${cls}">${day}<br>
                     <input type="text" inputmode="decimal" pattern="[0-9.]*" 
-                      onchange="calculateTotal()">円</td>`;
+                      onchange="calculateTotal()">h</td>`;
           if (wday === 6) {
             row += "</tr>";
             table.innerHTML += row;
