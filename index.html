@@ -6,52 +6,50 @@
   <title>保育園延長料金計算システム</title>
   <style>
     body {
-      font-family: sans-serif;
-      padding: 10px;
-      max-width: 100%;
+      font-family: Arial, sans-serif;
+      margin: 10px;
+      font-size: 20px;
     }
     h1 {
       text-align: center;
       font-size: 28px;
-      margin-bottom: 10px;
+      font-weight: bold;
     }
-    label, input, button {
-      font-size: 22px;
-    }
-    table { 
-      border-collapse: collapse; 
-      width: 100%; 
-      margin-top: 10px; 
-      table-layout: fixed;  /* 各列を均等に */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+      table-layout: fixed;
     }
     th, td {
       border: 1px solid #ccc;
       padding: 5px;
       text-align: center;
-      font-size: 15px;
+      font-size: 20px;
       word-wrap: break-word;
     }
     td input {
       width: 100%;
-      font-size: 15px;
+      font-size: 20px;
       text-align: right;
       box-sizing: border-box;
     }
-    .sunday { background-color: #ffe6e6; }
-    .saturday { background-color: #e6f0ff; }
-    .holiday { background-color: #ffe6e6; } /* 祝日は日曜と同じ色 */
-    .settings { display: none; margin-top: 10px; }
-    .result { margin-top: 15px; font-size: 22px; }
-    .toggle-btn {
-      margin: 10px 0;
-      font-size: 15px;
-      padding: 6px 12px;
+    .saturday { background-color: #e0f0ff; }
+    .sunday   { background-color: #ffe0e0; }
+    .holiday  { background-color: #ffcccc; }
+    .settings { display: none; margin: 10px 0; }
+    .settings label { margin-right: 10px; }
+    .result {
+      margin-top: 15px;
+      font-size: 22px;
     }
-    .share-btn {
-      display: block;
-      margin: 15px auto;
-      font-size: 15px;
-      padding: 8px 14px;
+    .share {
+      margin-top: 20px;
+      text-align: center;
+    }
+    button {
+      font-size: 20px;
+      padding: 5px 10px;
     }
   </style>
 </head>
@@ -59,19 +57,20 @@
   <h1>保育園延長料金計算システム</h1>
 
   <div>
-    年: <input type="number" id="year" style="width:100px;">
-    月: <input type="number" id="month" style="width:70px;">
-    <button onclick="generateCalendar()">表示</button>
+    年: <input type="number" id="year" style="font-size:20px; width:100px;">
+    月: <input type="number" id="month" style="font-size:20px; width:80px;">
+    <button onclick="renderCalendar()">表示</button>
   </div>
 
-  <button class="toggle-btn" onclick="toggleSettings()">⚙ 設定を表示/非表示</button>
-
-  <div id="settings" class="settings">
-    1時間あたり料金: <input type="number" id="rate" value="250"> 円</br>
-    1日上限: <input type="number" id="dailyMax" value="1250"> 円</br>
-    1か月上限: <input type="number" id="monthlyMax" value="10000"> 円</br>
-    補助の日額上限: <input type="number" id="subsidyDailyMax" value="450"> 円</br>
-    補助の月額上限: <input type="number" id="subsidyMonthlyMax" value="11260"> 円
+  <div>
+    <button onclick="toggleSettings()">⚙ 設定を表示/非表示</button>
+    <div class="settings" id="settings">
+      <label>1時間あたり料金 <input type="number" id="rate" value="250"></label>
+      <label>1日上限 <input type="number" id="dailyMax" value="1250"></label>
+      <label>1か月上限 <input type="number" id="monthlyMax" value="10000"></label>
+      <label>補助（日額上限） <input type="number" id="subsidyDailyMax" value="450"></label>
+      <label>補助（月額上限） <input type="number" id="subsidyMonthlyMax" value="11260"></label>
+    </div>
   </div>
 
   <table id="calendar"></table>
@@ -79,16 +78,23 @@
   <div class="result">
     <p>合計料金: <span id="totalFee">0</span> 円</p>
     <p>補助額: <span id="subsidyAmount">0</span> 円</p>
-    <p><strong>自己負担額: <span id="finalFee">0</span> 円</strong></p>
+    <p>自己負担額: <span id="finalFee">0</span> 円</p>
   </div>
 
-  <button class="share-btn" onclick="generateShareCode()">共有コードを生成</button>
-  <div id="shareCode"></div>
+  <div class="share">
+    <button onclick="generateShareCode()">共有コードを生成</button>
+    <p id="shareCode"></p>
+  </div>
 
   <script>
     const apiKey = "AIzaSyBLeM4k58xXuKRqh9-tuLUCeOLjF2wkrM4";
     const holidayCalendarId = "japanese__ja@holiday.calendar.google.com";
     let holidays = {};
+
+    function toggleSettings() {
+      const s = document.getElementById("settings");
+      s.style.display = (s.style.display === "none") ? "block" : "none";
+    }
 
     async function fetchHolidays(year, month) {
       const timeMin = new Date(year, month - 1, 1).toISOString();
@@ -100,61 +106,11 @@
       if (data.items) {
         data.items.forEach(event => {
           if (event.start && event.start.date) {
-            // UTCズレ回避のため、文字列のまま保持
-            const dateStr = event.start.date; // "2025-10-13"
+            const dateStr = event.start.date; // YYYY-MM-DD 文字列
             holidays[dateStr] = event.summary;
           }
         });
       }
-    }
-
-    function toggleSettings() {
-      const s = document.getElementById("settings");
-      s.style.display = (s.style.display === "none" || s.style.display === "") ? "block" : "none";
-    }
-
-    function generateCalendar() {
-      const year = parseInt(document.getElementById("year").value);
-      const month = parseInt(document.getElementById("month").value);
-
-      fetchHolidays(year, month).then(() => {
-        const firstDay = new Date(year, month - 1, 1).getDay();
-        const daysInMonth = new Date(year, month, 0).getDate();
-        const table = document.getElementById("calendar");
-        table.innerHTML = "";
-
-        let header = "<tr>";
-        ["日","月","火","水","木","金","土"].forEach(d => header += `<th>${d}</th>`);
-        header += "</tr>";
-        table.innerHTML += header;
-
-        let row = "<tr>";
-        for (let i = 0; i < firstDay; i++) row += "<td></td>";
-
-        for (let day = 1; day <= daysInMonth; day++) {
-          const date = new Date(year, month - 1, day);
-          const wday = date.getDay();
-          const dateStr = date.toISOString().split("T")[0];
-          let cls = "";
-          if (wday === 0) cls = "sunday";
-          else if (wday === 6) cls = "saturday";
-          if (holidays[dateStr]) cls = "holiday";
-
-          row += `<td class="${cls}">${day}<br>
-                    <input type="text" inputmode="decimal" pattern="[0-9.]*" 
-                      onchange="calculateTotal()">h</td>`;
-          if (wday === 6) {
-            row += "</tr>";
-            table.innerHTML += row;
-            row = "<tr>";
-          }
-        }
-        if (row !== "<tr>") {
-          row += "</tr>";
-          table.innerHTML += row;
-        }
-        calculateTotal();
-      });
     }
 
     function calculateTotal() {
@@ -181,7 +137,7 @@
       if (total > monthlyMax) total = monthlyMax;
       if (subsidyTotal > subsidyMonthlyMax) subsidyTotal = subsidyMonthlyMax;
 
-      const finalFee = total - subsidyTotal;
+      const finalFee = Math.max(total - subsidyTotal, 0); // マイナス防止
 
       document.getElementById("totalFee").innerText = total.toFixed(0);
       document.getElementById("subsidyAmount").innerText = subsidyTotal.toFixed(0);
@@ -189,54 +145,69 @@
     }
 
     function generateShareCode() {
-      const year = document.getElementById("year").value;
-      const month = document.getElementById("month").value;
-      const rate = document.getElementById("rate").value;
-      const dailyMax = document.getElementById("dailyMax").value;
-      const monthlyMax = document.getElementById("monthlyMax").value;
-      const subsidyDailyMax = document.getElementById("subsidyDailyMax").value;
-      const subsidyMonthlyMax = document.getElementById("subsidyMonthlyMax").value;
-      const values = Array.from(document.querySelectorAll("#calendar input")).map(i => i.value);
-
-      const data = {year, month, rate, dailyMax, monthlyMax, subsidyDailyMax, subsidyMonthlyMax, values};
-      const code = btoa(JSON.stringify(data));
+      const inputs = Array.from(document.querySelectorAll("#calendar input")).map(i => i.value);
+      const settings = [
+        document.getElementById("rate").value,
+        document.getElementById("dailyMax").value,
+        document.getElementById("monthlyMax").value,
+        document.getElementById("subsidyDailyMax").value,
+        document.getElementById("subsidyMonthlyMax").value,
+      ];
+      const code = btoa(JSON.stringify({ inputs, settings }));
       document.getElementById("shareCode").innerText = code;
     }
 
     function loadFromShareCode(code) {
       try {
         const data = JSON.parse(atob(code));
-        document.getElementById("year").value = data.year;
-        document.getElementById("month").value = data.month;
-        document.getElementById("rate").value = data.rate;
-        document.getElementById("dailyMax").value = data.dailyMax;
-        document.getElementById("monthlyMax").value = data.monthlyMax;
-        document.getElementById("subsidyDailyMax").value = data.subsidyDailyMax;
-        document.getElementById("subsidyMonthlyMax").value = data.subsidyMonthlyMax;
+        const inputs = document.querySelectorAll("#calendar input");
+        inputs.forEach((input, idx) => input.value = data.inputs[idx] || "");
+        [ "rate","dailyMax","monthlyMax","subsidyDailyMax","subsidyMonthlyMax" ]
+          .forEach((id, idx) => document.getElementById(id).value = data.settings[idx]);
+        calculateTotal();
+      } catch (e) { alert("無効な共有コードです"); }
+    }
 
-        generateCalendar();
-        setTimeout(() => {
-          const inputs = document.querySelectorAll("#calendar input");
-          data.values.forEach((v,i)=>{ if(inputs[i]) inputs[i].value = v; });
-          calculateTotal();
-        }, 300);
-      } catch(e) {
-        alert("共有コードが無効です");
+    async function renderCalendar() {
+      const year = parseInt(document.getElementById("year").value);
+      const month = parseInt(document.getElementById("month").value);
+      await fetchHolidays(year, month);
+
+      const firstDay = new Date(year, month - 1, 1).getDay();
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const table = document.getElementById("calendar");
+      table.innerHTML = "";
+
+      let header = "<tr>";
+      ["日","月","火","水","木","金","土"].forEach(d => header += "<th>"+d+"</th>");
+      header += "</tr>";
+      table.innerHTML = header;
+
+      let row = "<tr>";
+      for (let i = 0; i < firstDay; i++) row += "<td></td>";
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(year, month - 1, d);
+        const dateStr = date.toISOString().split("T")[0];
+        let cls = "";
+        if (date.getDay() === 0) cls = "sunday";
+        if (date.getDay() === 6) cls = "saturday";
+        if (holidays[dateStr]) cls = "holiday";
+
+        row += `<td class="${cls}">${d}<br><input type="number" step="0.1" min="0" oninput="calculateTotal()"></td>`;
+        if (date.getDay() === 6) { row += "</tr>"; table.innerHTML += row; row = "<tr>"; }
       }
+      if (row !== "<tr>") row += "</tr>", table.innerHTML += row;
+
+      calculateTotal();
     }
 
     window.onload = () => {
       const today = new Date();
       document.getElementById("year").value = today.getFullYear();
       document.getElementById("month").value = today.getMonth() + 1;
-
-      const params = new URLSearchParams(window.location.search);
-      if (params.has("code")) {
-        loadFromShareCode(params.get("code"));
-      } else {
-        generateCalendar();
-      }
-    }
+      renderCalendar();
+    };
   </script>
 </body>
 </html>
