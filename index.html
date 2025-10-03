@@ -188,14 +188,25 @@
 
       for (let d = 1; d <= daysInMonth; d++) {
         const date = new Date(year, month - 1, d);
-        const dateStr = date.toISOString().split("T")[0];
+        
+        // ローカルの日付を YYYY-MM-DD に変換（UTCを通さない）
+        const dateStr = [
+          date.getFullYear(),
+          String(date.getMonth() + 1).padStart(2, "0"),
+          String(date.getDate()).padStart(2, "0")
+        ].join("-");
+
         let cls = "";
         if (date.getDay() === 0) cls = "sunday";
         if (date.getDay() === 6) cls = "saturday";
         if (holidays[dateStr]) cls = "holiday";
 
         row += `<td class="${cls}">${d}<br><input type="number" step="0.1" min="0" oninput="calculateTotal()"></td>`;
-        if (date.getDay() === 6) { row += "</tr>"; table.innerHTML += row; row = "<tr>"; }
+        if (date.getDay() === 6) {
+          row += "</tr>";
+          table.innerHTML += row;
+          row = "<tr>";
+        }
       }
       if (row !== "<tr>") row += "</tr>", table.innerHTML += row;
 
