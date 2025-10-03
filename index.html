@@ -100,7 +100,9 @@
       if (data.items) {
         data.items.forEach(event => {
           if (event.start && event.start.date) {
-            holidays[event.start.date] = event.summary;
+            // UTCズレ回避のため、文字列のまま保持
+            const dateStr = event.start.date; // "2025-10-13"
+            holidays[dateStr] = event.summary;
           }
         });
       }
